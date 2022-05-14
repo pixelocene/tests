@@ -32,10 +32,11 @@ end
 
 fwk={
 	new=function(_x,_y)
+		local colors={10,12,14}
 		local self={
 			x=nil,
 			y=nil,
-			col=7,
+			col=colors[ceil(rnd(#colors))],
 			ptcls={}
 		}
 		
@@ -45,7 +46,7 @@ fwk={
 		-- make firework explode
 		-- and generate particles
 		function self.explode()
-			for i=1,20 do
+			for i=1,50 do
 				add(
 					self.ptcls,
 					fwptcl.new(
@@ -94,6 +95,7 @@ fwptcl={
 			y=nil,
 			dx=0,
 			dy=0,
+			sp=3,
 			ang=nil,
 			col=nil,
 			age=0,
@@ -110,8 +112,20 @@ fwptcl={
 		
 		-- update particle position
 		function self.update()
-			self.x+=self.dx
-			self.y+=self.dy
+			self.sp=mid(
+				0.4,
+				self.sp-0.2,
+				self.sp
+			)
+			self.x+=self.dx*self.sp
+			if self.sp <= 0.6 then
+				self.dy=mid(
+					3,
+					self.dy+0.2,
+					self.dy
+				)
+			end
+			self.y+=self.dy*self.sp
 			self.age+=1
 		end
 		
