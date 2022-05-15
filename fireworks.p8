@@ -2,28 +2,31 @@ pico-8 cartridge // http://www.pico-8.com
 version 36
 __lua__
 function _init()
-	fw=nil
+	fws={}
 end
 
 function _update()
 	-- delete fireworks if finished
-	if fw~=nil and fw.finished() then
-		fw=nil
+	for i=#fws,1,-1 do
+		if fws[i].finished() then
+			deli(fws,i)
+		end
 	end
 	-- start new firework
 	if btnp(❎) then
-		fw=fwk.new()
+		local fw=fwk.new()
 		fw.explode()
+		add(fws,fw)
 	end
 	-- make firework alive
-	if fw~=nil then
+	for fw in all(fws) do
 		fw.update()
 	end
 end
 
 function _draw()
 	cls()
-	if fw~=nil then
+	for fw in all(fws) do
 		fw.draw()
 	end
 end
