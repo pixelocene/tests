@@ -46,7 +46,7 @@ fwk={
 		-- make firework explode
 		-- and generate particles
 		function self.explode()
-			for i=1,50 do
+			for i=1,60 do
 				add(
 					self.ptcls,
 					fwptcl.new(
@@ -61,7 +61,13 @@ fwk={
 		-- check if the firework has
 		-- finished
 		function self.finished()
-			return #self.ptcls==0
+			local finished=true
+			for ptcl in all(self.ptcls) do
+				if not ptcl.dead() then
+					finished=false
+				end
+			end
+			return finished
 		end
 		
 		-- update the firework/particles
@@ -69,9 +75,6 @@ fwk={
 			for i=#self.ptcls,1,-1 do
 				local ptcl=self.ptcls[i]
 				ptcl.update()
-				if ptcl:dead() then
-					deli(self.ptcls,i)
-				end
 			end
 		end
 		
@@ -91,6 +94,8 @@ fwk={
 fwptcl={
 	new=function(_x,_y,_col)
 		local self={
+			ox=nil,
+			oy=nil,
 			x=nil,
 			y=nil,
 			dx=0,
@@ -99,19 +104,48 @@ fwptcl={
 			ang=nil,
 			col=nil,
 			age=0,
-			mage=0
+			mage=0,
+			trail={}
 		}
 		
+		-- origin coords
+		self.ox=_x
+		self.oy=_y
+		-- end of acceleration coords
+		self.ex=_x
+		self.ey=_y
+		-- current coord
 		self.x=_x
 		self.y=_y
+		-- movement
 		self.ang=rnd(365)
 		self.dx=sin(self.ang)
 		self.dy=cos(self.ang)
+		-- color
 		self.col=_col
-		self.mage=30+ceil(rnd(40))
+		-- maximum age of the particle
+		self.mage=10+ceil(rnd(20))
 		
 		-- update particle position
 		function self.update()
+		
+			local col=self.col
+			if self.isdying() then
+				col=5
+			end
+			
+			-- add a particle in the trail
+			add(
+				self.trail,
+				fwpctltrail.new(
+					self.x,
+					self.y,
+					self.age+1,
+					self.mage/2,
+					col
+				)
+			)
+		
 			self.sp=mid(
 				0.4,
 				self.sp-0.2,
@@ -120,13 +154,25 @@ fwptcl={
 			self.x+=self.dx*self.sp
 			if self.sp <= 0.6 then
 				self.dy=mid(
-					3,
+					0.5,
 					self.dy+0.2,
 					self.dy
 				)
 			end
+
 			self.y+=self.dy*self.sp
 			self.age+=1
+			
+			for t in all(self.trail) do
+				t.update()
+			end
+			
+			-- remove all dead trail
+			for i=#self.trail,1,-1 do
+				if self.trail[i].isdead() then
+					deli(self.trail,i)
+				end
+			end
 		end
 		
 		-- check if the particle
@@ -137,12 +183,53 @@ fwptcl={
 		
 		-- draw the particle on screen
 		function self.draw()
-			pset(self.x,self.y,self.col)
+			-- draw the trail
+			for t in all(self.trail) do
+				t.draw()
+			end
+			-- draw ending pixel
+			local col=self.col
+			if self.isdying() then
+				col=5
+			end
+			pset(self.x,self.y,col)
+		end
+		
+		function self.isdying()
+			return self.age/self.mage>0.8
 		end
 		
 		return self
 	end
 		
+}
+
+-- fireworks particles trail
+
+fwpctltrail={
+	new=function(_x,_y,_age,_mage,_col)
+		local self={
+			x=_x,
+			y=_y,
+			age=0,
+			mage=3,
+			col=_col,
+		}
+		
+		function self.isdead()
+			return self.age>=self.mage
+		end
+		
+		function self.update()
+			self.age+=rnd(1)
+		end
+		
+		function self.draw()
+			pset(self.x,self.y,self.col)
+		end
+		
+		return self
+	end
 }
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
