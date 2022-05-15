@@ -184,8 +184,12 @@ fwptcl={
 		-- draw the particle on screen
 		function self.draw()
 			-- draw the trail
-			for t in all(self.trail) do
-				t.draw()
+			for i,t in ipairs(self.trail) do
+				local nxt=nil
+				if i<#self.trail then
+					nxt=self.trail[i+1]
+				end
+				t.draw(nxt)
 			end
 			-- draw ending pixel
 			local col=self.col
@@ -224,7 +228,16 @@ fwpctltrail={
 			self.age+=rnd(1)
 		end
 		
-		function self.draw()
+		function self.draw(_nxt)
+			if _nxt~=nil then
+				line(
+					self.x,
+					self.y,
+					_nxt.x,
+					_nxt.y,
+					self.col
+				)
+			end
 			pset(self.x,self.y,self.col)
 		end
 		
